@@ -4,6 +4,7 @@ import re
 from copy import deepcopy
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Union
 
 import torch
 from torch import nn
@@ -70,7 +71,7 @@ class Params:
     seq_len: int = 2048
     post_embed_norm: bool = False
     weight_tying: bool = False
-    norm_type: str = "default_layer_norm"
+    norm_type: Union[str, nn.Module] = "default_layer_norm"
     apply_qk_norm: bool = False
     positional_embedding_type: str = "rotary"
     ffn_type: str = "swiglu"
@@ -163,10 +164,9 @@ class CustomAttn(nn.Module):
         std = std / math.sqrt(2 * (layer_id + 1))
         torch.nn.init.trunc_normal_(self.out_proj.weight, std=std, a=-3 * std, b=3 * std)
 
-        norm_type = get_norm_class(args.norm_type)
         # initialize norm layers for queries and keys if needed
         self.q_norm = (
-            norm_type(
+            args.norm_type(
                 args.n_heads * self.head_dim,
                 eps=args.norm_eps,
             )
@@ -174,7 +174,7 @@ class CustomAttn(nn.Module):
             else nn.Identity()
         )
         self.k_norm = (
-            norm_type(
+            args.norm_type(
                 args.n_heads * self.head_dim,
                 eps=args.norm_eps,
             )
@@ -234,12 +234,11 @@ class Block(nn.Module):
             self._ff_w2 = nn.Linear(hidden_dim, args.dim, bias=False)
             self.feed_forward = nn.Sequential(self._ff_w1, nn.GELU(approximate="none"), self._ff_w2)
         self.layer_id = layer_id
-        norm_type = get_norm_class(args.norm_type)
-        self.attention_norm = norm_type(
+        self.attention_norm = args.norm_type(
             args.dim,
             eps=args.norm_eps,
         )
-        self.ffn_norm = norm_type(
+        self.ffn_norm = args.norm_type(
             args.dim,
             eps=args.norm_eps,
         )
@@ -281,9 +280,10 @@ class Transformer(nn.Module, PyTorchModelHubMixin):
         self.vocab_size = params.vocab_size
         self.n_layers = params.n_layers
         self.seq_len = params.seq_len
-        norm_type = get_norm_class(params.norm_type)
+        if isinstance(params.norm_type, str):
+            params.norm_type = get_norm_class(params.norm_type)
         self.post_embed_norm = (
-            norm_type(
+            params.norm_type(
                 params.dim,
                 eps=params.norm_eps,
             )
@@ -299,7 +299,7 @@ class Transformer(nn.Module, PyTorchModelHubMixin):
             self.layers.append(Block(layer_id, params))
 
         # get class for normalization layers
-        self.norm = norm_type(
+        self.norm = params.norm_type(
             params.dim,
             eps=params.norm_eps,
         )
