@@ -92,7 +92,7 @@ class MockDataArgs(object):
 
 
 
-def create_train_fixtures(model = "open_lm_11m"):
+def create_train_fixtures(model="open_lm_11m"):
     # Setup data, optimizer, and other basic settings
     args = MockTrainArgs(model)
 
