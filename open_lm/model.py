@@ -383,7 +383,10 @@ def create_params(args):
             weight_tying=cfg["weight_tying"],
             norm_type=get_norm_class(cfg.get("model_norm", args.model_norm)),
             attn_func=get_attn_func(
-                args.attn_name, args.attn_activation, args.attn_seq_scalar, args.attn_seq_scalar_alpha
+                cfg.get("attn_name", args.attn_name),
+                cfg.get("attn_activation", args.attn_activation),
+                cfg.get("attn_seq_scalar", args.attn_seq_scalar),
+                cfg.get("attn_seq_scalar_alpha", args.attn_seq_scalar_alpha),
             ),
             apply_qk_norm=cfg.get("qk_norm", args.qk_norm),
             positional_embedding_type=cfg.get("positional_embedding_type", args.positional_embedding_type),
