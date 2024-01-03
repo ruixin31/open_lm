@@ -105,8 +105,8 @@ def add_model_args(parser):
     parser.add_argument(
         "--attn-name",
         type=str,
-        default="xformers_attn",
-        choices=["xformers_attn", "torch_attn", "custom_attn"],
+        default="default_attn",  # Using `default_attn` due to the default attention should differ by gpu availability, not config
+        choices=["default_attn", "xformers_attn", "torch_attn", "custom_attn"],
         help="type of attention to use",
     )
     parser.add_argument(

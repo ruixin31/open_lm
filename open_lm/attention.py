@@ -125,7 +125,9 @@ def get_attn_func(
     attn_seq_scalar=None,
     alpha=None,
 ):
-    if attn_name == "xformers_attn":
+    if attn_name == "default_attn":
+        return xformers_attn if torch.cuda.is_available() else torch_attn
+    elif attn_name == "xformers_attn":
         return xformers_attn
     elif attn_name == "torch_attn":
         return torch_attn
